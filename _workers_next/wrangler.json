@@ -2,13 +2,18 @@
     "name": "ldc-shop-next",
     "main": ".open-next/worker.js",
     "compatibility_date": "2025-11-12",
-    "compatibility_flags": [
-        "nodejs_compat"
-    ],
+    "compatibility_flags": ["nodejs_compat"],
     "assets": {
         "directory": ".open-next/assets",
         "binding": "ASSETS"
     },
+    "d1_databases": [
+        {
+            "binding": "DB",
+            "database_name": "ldc-shop",
+            "database_id": "4190d62f-8975-4ebb-8372-8df298a45109"
+        }
+    ],
     "observability": {
         "enabled": true
     }
