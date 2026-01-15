@@ -1,6 +1,10 @@
 {
     "name": "ldc-shop-next",
     "main": ".open-next/worker.js",
+    "vars": {
+        "ADMIN_USERS": "carefree_x_immortal",
+        "NEXT_PUBLIC_APP_URL": "https://shop.justsoso.work"
+    },
     "compatibility_date": "2025-11-12",
     "compatibility_flags": ["nodejs_compat"],
     "assets": {
