@@ -192,6 +192,24 @@ export async function deleteCard(cardId: number) {
     revalidatePath('/')
 }
 
+// 删除商品的所有未使用卡密
+export async function deleteAllCards(productId: string): Promise<{ deleted: number }> {
+    await checkAdmin()
+
+    // 只删除未使用且未被预留的卡密
+    const result = await db.delete(cards).where(
+        sql`${cards.productId} = ${productId}
+            AND COALESCE(${cards.isUsed}, false) = false
+            AND (${cards.reservedAt} IS NULL OR ${cards.reservedAt} < NOW() - INTERVAL '1 minute')`
+    ).returning({ id: cards.id })
+
+    revalidatePath('/admin')
+    revalidatePath(`/admin/cards/${productId}`)
+    revalidatePath('/')
+
+    return { deleted: result.length }
+}
+
 export async function saveShopName(rawName: string) {
     await checkAdmin()
 

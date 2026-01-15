@@ -367,7 +367,10 @@
             "uploading": "Uploading...",
             "uploadProgress": "Processed {{processed}} / {{total}}",
             "uploadSuccess": "Successfully imported {{count}} cards",
-            "fileHint": "Supports .txt files, one card per line"
+            "fileHint": "Supports .txt files, one card per line",
+            "clearAll": "Clear All",
+            "clearAllConfirm": "Are you sure you want to delete all available cards? This cannot be undone.",
+            "clearAllSuccess": "Deleted {{count}} cards"
         },
         "productForm": {
             "addTitle": "Add New Product",

@@ -367,7 +367,10 @@
             "uploading": "正在上传...",
             "uploadProgress": "已处理 {{processed}} / {{total}} 条",
             "uploadSuccess": "成功导入 {{count}} 条卡密",
-            "fileHint": "支持 .txt 文件，每行一个卡密"
+            "fileHint": "支持 .txt 文件，每行一个卡密",
+            "clearAll": "清空全部",
+            "clearAllConfirm": "确定要删除所有可用卡密吗？此操作不可恢复。",
+            "clearAllSuccess": "已删除 {{count}} 条卡密"
         },
         "productForm": {
             "addTitle": "添加商品",

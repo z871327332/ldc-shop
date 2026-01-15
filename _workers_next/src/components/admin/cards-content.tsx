@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { addCards, addCardsBatch, deleteCard } from "@/actions/admin"
+import { addCards, addCardsBatch, deleteCard, deleteAllCards } from "@/actions/admin"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import { CopyButton } from "@/components/copy-button"
@@ -184,8 +184,29 @@ export function CardsContent({ productId, productName, unusedCards }: CardsConte
                 </Card>
 
                 <Card>
-                    <CardHeader>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle>{t('admin.cards.available')}</CardTitle>
+                        {unusedCards.length > 0 && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                onClick={async () => {
+                                    if (confirm(t('admin.cards.clearAllConfirm'))) {
+                                        try {
+                                            const result = await deleteAllCards(productId)
+                                            toast.success(t('admin.cards.clearAllSuccess', { count: result.deleted }))
+                                            router.refresh()
+                                        } catch (e: any) {
+                                            toast.error(e.message)
+                                        }
+                                    }
+                                }}
+                            >
+                                <Trash2 className="h-4 w-4 mr-1" />
+                                {t('admin.cards.clearAll')}
+                            </Button>
+                        )}
                     </CardHeader>
                     <CardContent className="max-h-[400px] overflow-y-auto space-y-2">
                         {unusedCards.length === 0 ? (
