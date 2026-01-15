@@ -1,14 +1,16 @@
 'use client'
 
+import { useState, useRef } from "react"
 import { useI18n } from "@/lib/i18n/context"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { addCards, deleteCard } from "@/actions/admin"
+import { Progress } from "@/components/ui/progress"
+import { addCards, addCardsBatch, deleteCard } from "@/actions/admin"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import { CopyButton } from "@/components/copy-button"
-import { Trash2 } from "lucide-react"
+import { Trash2, Upload } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 interface CardData {
@@ -22,9 +24,19 @@ interface CardsContentProps {
     unusedCards: CardData[]
 }
 
+// 批次大小
+const BATCH_SIZE = 50
+
 export function CardsContent({ productId, productName, unusedCards }: CardsContentProps) {
     const { t } = useI18n()
     const router = useRouter()
+    const fileInputRef = useRef<HTMLInputElement>(null)
+
+    // 文件上传状态
+    const [uploading, setUploading] = useState(false)
+    const [progress, setProgress] = useState(0)
+    const [totalCount, setTotalCount] = useState(0)
+    const [processedCount, setProcessedCount] = useState(0)
 
     const handleSubmit = async (formData: FormData) => {
         try {
@@ -33,6 +45,60 @@ export function CardsContent({ productId, productName, unusedCards }: CardsConte
             router.refresh()
         } catch (e: any) {
             toast.error(e.message)
+        }
+    }
+
+    // 处理文件上传
+    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0]
+        if (!file) return
+
+        setUploading(true)
+        setProgress(0)
+        setProcessedCount(0)
+        setTotalCount(0)
+
+        try {
+            // 读取文件内容
+            const text = await file.text()
+
+            // 按换行分割，过滤空行
+            const cardList = text
+                .split(/\n/)
+                .map(c => c.trim())
+                .filter(c => c)
+
+            if (cardList.length === 0) {
+                toast.error(t('admin.cards.noCards'))
+                setUploading(false)
+                return
+            }
+
+            setTotalCount(cardList.length)
+
+            // 分批上传
+            let successCount = 0
+            for (let i = 0; i < cardList.length; i += BATCH_SIZE) {
+                const batch = cardList.slice(i, i + BATCH_SIZE)
+                const result = await addCardsBatch(productId, batch)
+                successCount += result.success
+                setProcessedCount(Math.min(i + BATCH_SIZE, cardList.length))
+                setProgress(Math.round(((i + BATCH_SIZE) / cardList.length) * 100))
+            }
+
+            toast.success(t('admin.cards.uploadSuccess', { count: successCount }))
+            router.refresh()
+        } catch (e: any) {
+            toast.error(e.message)
+        } finally {
+            setUploading(false)
+            setProgress(0)
+            setProcessedCount(0)
+            setTotalCount(0)
+            // 清空文件输入
+            if (fileInputRef.current) {
+                fileInputRef.current.value = ''
+            }
         }
     }
 
@@ -52,12 +118,67 @@ export function CardsContent({ productId, productName, unusedCards }: CardsConte
                 <Card>
                     <CardHeader>
                         <CardTitle>{t('admin.cards.addCards')}</CardTitle>
+                        <CardDescription>{t('admin.cards.fileHint')}</CardDescription>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="space-y-4">
+                        {/* 文件上传区域 */}
+                        <div className="space-y-2">
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept=".txt,.csv"
+                                onChange={handleFileUpload}
+                                className="hidden"
+                                disabled={uploading}
+                            />
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="w-full"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={uploading}
+                            >
+                                <Upload className="h-4 w-4 mr-2" />
+                                {uploading ? t('admin.cards.uploading') : t('admin.cards.uploadFile')}
+                            </Button>
+
+                            {/* 进度显示 */}
+                            {uploading && (
+                                <div className="space-y-2">
+                                    <Progress value={progress} className="h-2" />
+                                    <p className="text-sm text-muted-foreground text-center">
+                                        {t('admin.cards.uploadProgress', {
+                                            processed: processedCount,
+                                            total: totalCount
+                                        })}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="relative">
+                            <div className="absolute inset-0 flex items-center">
+                                <span className="w-full border-t" />
+                            </div>
+                            <div className="relative flex justify-center text-xs uppercase">
+                                <span className="bg-background px-2 text-muted-foreground">or</span>
+                            </div>
+                        </div>
+
+                        {/* 手动输入区域 */}
                         <form action={handleSubmit} className="space-y-4">
                             <input type="hidden" name="product_id" value={productId} />
-                            <Textarea name="cards" placeholder={t('admin.cards.placeholder')} rows={10} className="font-mono text-sm" required />
-                            <Button type="submit" className="w-full">{t('common.add')}</Button>
+                            <Textarea
+                                name="cards"
+                                placeholder={t('admin.cards.placeholder')}
+                                rows={10}
+                                className="font-mono text-sm"
+                                required
+                                disabled={uploading}
+                            />
+                            <Button type="submit" className="w-full" disabled={uploading}>
+                                {t('common.add')}
+                            </Button>
                         </form>
                     </CardContent>
                 </Card>

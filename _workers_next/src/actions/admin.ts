@@ -114,8 +114,9 @@ export async function addCards(formData: FormData) {
     const productId = formData.get('product_id') as string
     const rawCards = formData.get('cards') as string
 
+    // 只按换行分割，不按逗号（卡密内容可能包含逗号）
     const cardList = rawCards
-        .split(/[\n,]+/)
+        .split(/\n/)
         .map(c => c.trim())
         .filter(c => c)
 
@@ -143,6 +144,40 @@ export async function addCards(formData: FormData) {
     revalidatePath('/admin')
     revalidatePath(`/admin/cards/${productId}`)
     revalidatePath('/')
+}
+
+// 批量添加卡密（用于文件上传分批处理）
+export async function addCardsBatch(productId: string, cardKeys: string[]): Promise<{ success: number }> {
+    await checkAdmin()
+
+    // 过滤空字符串
+    const validKeys = cardKeys.map(k => k.trim()).filter(k => k)
+    if (validKeys.length === 0) return { success: 0 }
+
+    try {
+        await db.run(sql`DROP INDEX IF EXISTS cards_product_id_card_key_uq;`)
+    } catch {
+        // best effort
+    }
+
+    // D1 has a limit on SQL variables (around 100 bindings per query)
+    // Drizzle generates bindings for all columns (~8), so 100/8 ≈ 12 max
+    const BATCH_SIZE = 10
+    for (let i = 0; i < validKeys.length; i += BATCH_SIZE) {
+        const batch = validKeys.slice(i, i + BATCH_SIZE)
+        await db.insert(cards).values(
+            batch.map(key => ({
+                productId,
+                cardKey: key
+            }))
+        )
+    }
+
+    revalidatePath('/admin')
+    revalidatePath(`/admin/cards/${productId}`)
+    revalidatePath('/')
+
+    return { success: validKeys.length }
 }
 
 export async function deleteCard(cardId: number) {

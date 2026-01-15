@@ -359,10 +359,15 @@
         "cards": {
             "title": "Manage Stock",
             "addCards": "Add Cards",
-            "placeholder": "Enter card keys, separated by newlines or commas...",
+            "placeholder": "Enter card keys, one per line...",
             "available": "Available",
             "used": "Used",
-            "noCards": "No cards added yet."
+            "noCards": "No cards added yet.",
+            "uploadFile": "Upload File",
+            "uploading": "Uploading...",
+            "uploadProgress": "Processed {{processed}} / {{total}}",
+            "uploadSuccess": "Successfully imported {{count}} cards",
+            "fileHint": "Supports .txt files, one card per line"
         },
         "productForm": {
             "addTitle": "Add New Product",

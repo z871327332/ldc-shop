@@ -359,10 +359,15 @@
         "cards": {
             "title": "库存管理",
             "addCards": "添加卡密",
-            "placeholder": "输入卡密，支持换行或逗号分隔...",
+            "placeholder": "输入卡密，每行一个...",
             "available": "可用",
             "used": "已使用",
-            "noCards": "暂无卡密"
+            "noCards": "暂无卡密",
+            "uploadFile": "上传文件",
+            "uploading": "正在上传...",
+            "uploadProgress": "已处理 {{processed}} / {{total}} 条",
+            "uploadSuccess": "成功导入 {{count}} 条卡密",
+            "fileHint": "支持 .txt 文件，每行一个卡密"
         },
         "productForm": {
             "addTitle": "添加商品",

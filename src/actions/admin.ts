@@ -112,8 +112,9 @@ export async function addCards(formData: FormData) {
     const productId = formData.get('product_id') as string
     const rawCards = formData.get('cards') as string
 
+    // 只按换行分割，不按逗号（卡密内容可能包含逗号）
     const cardList = rawCards
-        .split(/[\n,]+/)
+        .split(/\n/)
         .map(c => c.trim())
         .filter(c => c)
 
@@ -135,6 +136,34 @@ export async function addCards(formData: FormData) {
     revalidatePath('/admin')
     revalidatePath(`/admin/cards/${productId}`)
     revalidatePath('/')
+}
+
+// 批量添加卡密（用于文件上传分批处理）
+export async function addCardsBatch(productId: string, cardKeys: string[]): Promise<{ success: number }> {
+    await checkAdmin()
+
+    // 过滤空字符串
+    const validKeys = cardKeys.map(k => k.trim()).filter(k => k)
+    if (validKeys.length === 0) return { success: 0 }
+
+    try {
+        await db.execute(sql`DROP INDEX IF EXISTS cards_product_id_card_key_uq;`)
+    } catch {
+        // best effort
+    }
+
+    await db.insert(cards).values(
+        validKeys.map(key => ({
+            productId,
+            cardKey: key
+        }))
+    )
+
+    revalidatePath('/admin')
+    revalidatePath(`/admin/cards/${productId}`)
+    revalidatePath('/')
+
+    return { success: validKeys.length }
 }
 
 export async function deleteCard(cardId: number) {
